@@ -1,0 +1,22 @@
+version: '3'
+services:
+  fulltextsearch:
+    build: fulltextsearch
+    container_name: praktikum_fulltextsearch
+    command: poetry run python -m flask run --host=0.0.0.0 --port=8000
+    volumes:
+      - ./fulltextsearch:/home/python/fulltextsearch
+    environment:
+      - FLASK_APP=fulltextsearch
+      - FLASK_ENV=development
+      - ELASTICSEARCH_HOST=elasticsearch:9200
+    ports:
+      - 8000:8000
+
+  elasticsearch:
+    container_name: praktikum_elasticsearch
+    image: elasticsearch:7.10.1
+    ports:
+      - 9200:9200
+    environment:
+      - discovery.type=single-node
