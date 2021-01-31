@@ -1,7 +1,9 @@
 import os
 
-from flask import Flask, g
+from flask import Flask
 from .elastic import init_app
+from movies import blueprint as movies_blueprint
+
 
 def create_app():
     app = Flask(__name__)
@@ -15,9 +17,6 @@ def create_app():
         pass
 
     init_app(app)
-
-    @app.route('/')
-    def index():
-        return 'Hello praktikum!'
+    app.register_blueprint(movies_blueprint)
 
     return app
