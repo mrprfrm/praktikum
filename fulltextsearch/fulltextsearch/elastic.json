@@ -24,6 +24,23 @@
                     }
                 }
             }
+        },
+        "mappings": {
+            "properties": {
+                "id": {"type": "keyword"},
+                "title": {
+                    "type": "text",
+                    "fielddata": true
+                },
+                "description": {"type": "text"},
+                "imdb_rating": {"type": "long"},
+                "genre": {"type": "text"},
+                "director": {"type": "text"},
+                "actors": {"type": "text"},
+                "actors_names": {"type": "text"},
+                "writers": {"type": "text"},
+                "writers_names": {"type": "text"}
+            }
         }
     }
 }
