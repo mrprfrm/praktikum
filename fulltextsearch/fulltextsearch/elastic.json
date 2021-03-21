@@ -32,14 +32,35 @@
                     "type": "text",
                     "fielddata": true
                 },
-                "description": {"type": "text"},
+                "description": {
+                    "type": "text",
+                    "fielddata": true
+                },
                 "imdb_rating": {"type": "long"},
-                "genre": {"type": "text"},
-                "director": {"type": "text"},
-                "actors": {"type": "text"},
-                "actors_names": {"type": "text"},
-                "writers": {"type": "text"},
-                "writers_names": {"type": "text"}
+                "genre": {
+                    "type": "text",
+                    "fielddata": true
+                },
+                "director": {
+                    "type": "text",
+                    "fielddata": true
+                },
+                "actors": {
+                    "type": "text",
+                    "fielddata": true
+                },
+                "actors_names": {
+                    "type": "text",
+                    "fielddata": true
+                },
+                "writers": {
+                    "type": "text",
+                    "fielddata": true
+                },
+                "writers_names": {
+                    "type": "text",
+                    "fielddata": true
+                }
             }
         }
     }
