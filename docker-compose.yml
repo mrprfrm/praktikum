@@ -1,4 +1,5 @@
 version: '3'
+
 services:
   fulltextsearch:
     build: fulltextsearch
@@ -12,11 +13,37 @@ services:
       - ELASTICSEARCH_HOST=elasticsearch:9200
     ports:
       - 8000:8000
+    depends_on:
+      - elasticsearch
+
+  admin:
+    build: admin
+    container_name: praktikum_admin
+    command: poetry run python -m flask run --host=0.0.0.0 --port=8000
+    volumes:
+      - ./admin:/home/python/admin
+    environment:
+      - FLASK_APP=admin
+      - FLASK_ENV=development
+      - ELASTICSEARCH_HOST=elasticsearch:9200
+    ports:
+      - 8000:8000
+    depends_on:
+      - database
+
+
+  database:
+    container_name: praktikum_database
+    image: postgres:13
+    ports:
+    - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=postgres
 
   elasticsearch:
     container_name: praktikum_elasticsearch
     image: elasticsearch:7.10.1
-    ports:
-      - 9200:9200
     environment:
       - discovery.type=single-node
+    ports:
+      - 9200:9200

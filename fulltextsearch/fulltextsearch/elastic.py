@@ -37,7 +37,7 @@ def close_elastic(e=None):
 
 
 @click.command('init-index')
-@click.option('--c', '-config', 'conf_path', default='server/elastic.json')
+@click.option('--c', '-config', 'conf_path', default='fulltextsearch/elastic.json')
 @with_appcontext
 def init_index_command(conf_path):
     if os.path.exists(conf_path):
@@ -94,7 +94,7 @@ def etl_command(db_path):
         except Exception as err:
             click.echo(err, err=True)
     else:
-        click.echo(f'File {db_path} is not exist.', err=True)
+        click.echo(f'File {db_path} does not exist.', err=True)
 
 
 def init_app(app):
