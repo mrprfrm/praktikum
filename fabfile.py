@@ -21,6 +21,18 @@ def shell(service_name):
     local(f'docker exec -it {PROJECT_NAME}_{service_name} poetry run flask shell')
 
 
+def initdb(service_name):
+    local(f'docker exec -it {PROJECT_NAME}_{service_name} poetry run flask db init')
+
+
+def migrate(service_name):
+    local(f'docker exec -it {PROJECT_NAME}_{service_name} poetry run flask db migrate')
+
+
+def upgrade(service_name):
+    local(f'docker exec -it {PROJECT_NAME}_{service_name} poetry run flask db upgrade')
+
+
 def etl(path):
     local(f'docker exec -it {PROJECT_NAME}_fulltextsearch poetry run flask etl {path}')
 

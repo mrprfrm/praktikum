@@ -15,7 +15,7 @@ def create_app():
 
     app.config.from_mapping(
         SECRET_KEY=os.getenv('SECRET', 'secret'),
-        SQLALCHEMY_DATABASE_URI=f'postgres://{username}:{password}@{host}:{port}/{name}'
+        SQLALCHEMY_DATABASE_URI=f'postgresql://{username}:{password}@{host}:{port}/{name}'
     )
 
     try:
