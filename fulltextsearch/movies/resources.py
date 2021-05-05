@@ -15,7 +15,6 @@ class Movie(Resource):
             return schema.dump(data['_source'])
         except NotFoundError:
             abort(404, message='Movie is not found.')
-        import ipdb; ipdb.set_trace()
 
 
 class Movies(Resource):

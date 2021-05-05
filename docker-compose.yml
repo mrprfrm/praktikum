@@ -31,7 +31,6 @@ services:
     depends_on:
       - database
 
-
   database:
     container_name: praktikum_database
     image: postgres:13
