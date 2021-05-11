@@ -15,10 +15,6 @@ class Singleton(type):
 @dataclass
 class Executor(metaclass=Singleton):
     context: dict = field(default_factory=dict)
-    pipelines: dict = field(default_factory=dict)
-
-    def __post_init__(self):
-        self._root_pipelines = []
 
     def _init_context(self, context):
         context, source_context = itertools.tee(context)
@@ -29,89 +25,90 @@ class Executor(metaclass=Singleton):
                 self._init_context(filter(lambda itm: itm._name not in self.context, source_context))
 
     def _init_pipelines(self, pipelines):
-        def init_pipeline(pipeline, pipelines):
-            pipelines, children_pipelines = itertools.tee(pipelines)
-            for child in filter(lambda itm: itm._source == pipeline._name, children_pipelines):
-                if child._name not in self.pipelines:
-                    pipelines, children_pipelines = itertools.tee(pipelines)
-                    child = init_pipeline(child, children_pipelines)
-                    coro = child()
-                    next(coro)
-                    self.pipelines.update({child._name: coro})
-                else:
-                    coro = self.pipelines.get(child._name)
-                pipeline._add_children(coro)
-            return pipeline
+        pipelines_map = {itm._name: itm for itm in pipelines}
 
-        pipelines, root_pipelines = itertools.tee(pipelines)
-        for pipeline_obj in filter(lambda itm: itm._source is None, root_pipelines):
-            pipelines, children_pipelines = itertools.tee(pipelines)
-            root_pipeline = init_pipeline(pipeline_obj, children_pipelines)
-            root_coro = root_pipeline()
-            next(root_coro)
-            self._root_pipelines.append(root_coro)
+        def init_pipeline(pipeline, next_pipeline=None):
+            coro = pipeline(next_pipeline)
+            next(coro)
+            if pipeline._prev is not None:
+                prev_pipeline = pipelines_map[pipeline._prev]
+                return init_pipeline(prev_pipeline, coro)
+            return coro
+
+
+        prev_names = [itm._prev for itm in pipelines_map.values() if itm._prev is not None]
+        for pipeline in filter(lambda itm: itm._name not in prev_names, pipelines_map.values()):
+            yield init_pipeline(pipeline)
 
     def run(self, module):
         context = (attr for name, attr in inspect.getmembers(module) if isinstance(attr, Context))
         self._init_context(context)
 
         pipelines = (attr for name, attr in inspect.getmembers(module) if isinstance(attr, Pipeline))
-        self._init_pipelines(pipelines)
+        root_pipelines = list(self._init_pipelines(pipelines))
 
         while True:
-            for pipeline in self._root_pipelines:
+            for pipeline in root_pipelines:
                 next(pipeline)
 
 
 class Pipeline:
-    def __init__(self, func, source=None):
+    def __init__(self, func, prev=None):
         self._func = func
-        self._source = source
+        self._prev = prev
         self._name = func.__name__
-        self._children = set()
         self._context = None
 
-    def _add_children(self, *children):
-        self._children = self._children | set(children)
-        return self._children
+    @property
+    def executor(self):
+        return Executor()
 
     @property
     def context(self):
         if self._context is None:
-            executor = Executor()
             spec = inspect.getfullargspec(self._func)
-            self._context = {name: executor.context[name] for name in spec.args if name != 'data'}
+            self._context = {name: self.executor.context[name] for name in spec.args if name != 'data'}
         return self._context
 
-    def __call__(self):
+    def __call__(self, next_pipeline=None):
         while True:
             data = (yield)
             result = self._func(data, **self.context)
-            for child in self._children:
-                if child is not None:
-                    child.send(result)
-
+            if next_pipeline is not None:
+                next_pipeline.send(result)
 
 class IPipeline(Pipeline):
-    def __call__(self, *args, **kwargs):
+    def __init__(self, func, prev=None, source=None):
+        super(IPipeline, self).__init__(func, prev)
+        self._source = source
+
+    def __call__(self, next_pipeline=None, *args, **kwargs):
         while True:
             data = (yield)
-            for item in data:
+            try:
+                if self._source is None:
+                    item = next(data)
+                elif self._source in self.executor.context:
+                    item = next(self.executor.context[self._source])
+                else:
+                    raise AttributeError(f'No context with name {self._source} exists')
+
                 result = self._func(item, **self.context)
-                for child in self._children:
-                    if child is not None:
-                        child.send(result)
+                if next_pipeline is not None:
+                    next_pipeline.send(result)
+            except StopIteration:
+                pass
 
 
-def pipeline(source=None):
+def pipeline(prev=None):
     def wrapper(func):
-        return Pipeline(func, source)
+        return Pipeline(func, prev)
     return wrapper
 
 
-def ipipeline(source=None):
+def ipipeline(prev=None, source=None):
     def wrapper(func):
-        return IPipeline(func, source)
+        return IPipeline(func, prev, source)
     return wrapper
 
 

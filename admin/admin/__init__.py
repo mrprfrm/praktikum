@@ -2,6 +2,7 @@ import os
 
 from flask import Flask
 from .database import init_app as init_db
+from .admin import init_app as init_admin
 
 
 def create_app():
@@ -24,5 +25,6 @@ def create_app():
         pass
 
     init_db(app)
+    init_admin(app)
 
     return app

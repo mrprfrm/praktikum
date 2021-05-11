@@ -37,9 +37,9 @@ class MovieGenre(BaseModel):
 
 
 class Position(str, Enum):
-    DIRECTOR = 'Режисёр'
-    WRITER = 'Сценарист'
-    ACTOR = 'Актёр'
+    DIRECTOR = 'DIRECTOR'
+    WRITER = 'WRITER'
+    ACTOR = 'ACTOR'
 
 
 class MoviePerson(BaseModel):
@@ -105,94 +105,77 @@ def writers():
         )
 
 
-@pipeline()
-def upload_movie(data, movies, insert):
-    for row in movies:
-        movie = Movie(
-            title=row['title'],
-            plot=row['plot'] if row['plot'] not in ['N/A', None] else None,
-            imdb_rating=row['imdb_rating'] if row['imdb_rating'] not in ['N/A', None] else None
-        )
-        insert('movies', movie)
-        logger.info('Movie created')
-        yield row, movie
+@ipipeline(source='movies')
+def upload_movie(data, insert):
+    movie = Movie(
+        title=data['title'],
+        plot=data['plot'] if data['plot'] not in ['N/A', None] else None,
+        imdb_rating=data['imdb_rating'] if data['imdb_rating'] not in ['N/A', None] else None
+    )
+    insert('movies', movie)
+    logger.info('Movie created')
+    return data, movie
 
 
-@ipipeline(source='upload_movie')
+@pipeline(prev='upload_movie')
 def upload_genres(data, insert):
     row, movie = data
     for genre in row['genre'].replace(' ', '').split(','):
         genre = Genre(name=genre)
+        through = MovieGenre(
+            movie_id=movie.id,
+            genre_id=genre.id
+        )
         insert('genres', genre)
-        yield movie, genre
+        logger.info('MovieGenre created')
+        logger.info('MovieGenre created')
+        insert('movies_genres', through)
 
 
-@ipipeline(source='upload_genres')
-def upload_movie_genre(data, insert):
-    movie, genre = data
-    through = MovieGenre(
-        movie_id=movie.id,
-        genre_id=genre.id
-    )
-    insert('movies_genres', through)
-
-
-@ipipeline(source='upload_movie')
+@pipeline(prev='upload_movie')
 def upload_writers(data, writers, insert):
     row, movie = data
     writers_ids = [itm['id'] for itm in json.loads(row['writers'])]
     for writer in filter(lambda itm: itm['id'] in writers_ids, writers):
         person = Person(name=writer['name'])
+        through = MoviePerson(
+            movie_id=movie.id,
+            person_id=person.id,
+            position=Position.WRITER
+        )
         insert('persons', person)
-        yield movie, person
+        logger.info('Person created')
+        logger.info('MoviePerson created')
+        insert('movies_person', through)
 
 
-@ipipeline(source='upload_writers')
-def upload_movie_writer(data, insert):
-    movie, person = data
-    through = MoviePerson(
-        movie_id=movie.id,
-        person_id=person.id,
-        position=Position.WRITER
-    )
-    insert('movies_person', through)
-
-
-@ipipeline(source='upload_movie')
+@pipeline(prev='upload_movie')
 def upload_directors(data, insert):
     row, movie = data
     for director in row['director'].split(','):
-        person = Person(name=director['name'])
+        person = Person(name=director)
+        through = MoviePerson(
+            movie_id=movie.id,
+            person_id=person.id,
+            position=Position.DIRECTOR
+        )
         insert('persons', person)
-        yield movie, person
+        logger.info('Person created')
+        logger.info('MoviePerson created')
+        insert('movies_person', through)
 
 
-@ipipeline(source='upload_directors', )
-def upload_movie_director(data, insert):
-    movie, person = data
-    through = MoviePerson(
-        movie_id=movie.id,
-        person_id=person.id,
-        position=Position.DIRECTOR
-    )
-    insert('movies_person', through)
-
-
-@ipipeline(source='upload_movie')
+@pipeline(prev='upload_movie')
 def upload_actors(data, insert):
     row, movie = data
     for actor_name in row['actors_names'].split(',') if row['actors_names'] else []:
         person = Person(name=actor_name)
+        through = MoviePerson(
+            movie_id=movie.id,
+            person_id=person.id,
+            position=Position.ACTOR
+        )
         insert('persons', person)
-        yield movie, person
-
-
-@ipipeline(source='upload_actors')
-def upload_movie_actor(data, insert):
-    movie, person = data
-    through = MoviePerson(
-        movie_id=movie.id,
-        person_id=person.id,
-        position=Position.ACTOR
-    )
-    insert('movies_person', through)
+        logger.info('Person created')
+        logger.info('MoviePerson created')
+        insert('movies_person', through)

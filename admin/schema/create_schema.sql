@@ -25,13 +25,13 @@ CREATE TABLE content.movies(
     imdb_rating DECIMAL DEFAULT 0
 );
 
-CREATE TYPE person_position AS ENUM ('Режисёр', 'Сценарист', 'Актёр');
+CREATE TYPE personposition AS ENUM ('Режисёр', 'Сценарист', 'Актёр');
 
 CREATE TABLE content.movies_person(
     id UUID NOT NULL,
     movie_id UUID NOT NULL,
     person_id UUID NOT NULL,
-    position person_position
+    position personposition
 );
 
 CREATE TABLE content.movies_genres(

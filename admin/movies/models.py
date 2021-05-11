@@ -6,38 +6,38 @@ from sqlalchemy.dialects.postgresql import UUID
 from admin.database import db
 
 
-class PersonPosition(Enum):
-    DIRECTOR = 'director'
-    WRITER = 'writer'
-    ACTOR = 'actor'
+class PersonPosition(str, Enum):
+    DIRECTOR = 'Режисёр'
+    WRITER = 'Сценарист'
+    ACTOR = 'Актёр'
 
 
 class MoviePerson(db.Model):
-    __tablename__ = 'content.movies_person'
+    __tablename__ = 'movies_person'
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    movie_id = db.Column(UUID(as_uuid=True), db.ForeignKey('content.movies.id'))
-    genre_id = db.Column(UUID(as_uuid=True), db.ForeignKey('content.persons.id'))
+    movie_id = db.Column(UUID(as_uuid=True), db.ForeignKey('movies.id'))
+    person_id = db.Column(UUID(as_uuid=True), db.ForeignKey('persons.id'))
 
     position = db.Column(db.Enum(PersonPosition), default=PersonPosition.DIRECTOR)
 
     movie = db.relationship('Movie', back_populates='persons')
-    persons = db.relationship('Movie', back_populates='movies')
+    person = db.relationship('Person', back_populates='movies')
 
 
 class MovieGenre(db.Model):
-    __tablename__ = 'content.movies_genres'
+    __tablename__ = 'movies_genres'
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    movie_id = db.Column(UUID(as_uuid=True), db.ForeignKey('content.movies.id'))
-    genre_id = db.Column(UUID(as_uuid=True), db.ForeignKey('content.genres.id'))
+    movie_id = db.Column(UUID(as_uuid=True), db.ForeignKey('movies.id'))
+    genre_id = db.Column(UUID(as_uuid=True), db.ForeignKey('genres.id'))
 
     movie = db.relationship('Movie', back_populates='genres')
     genre = db.relationship('Genre', back_populates='movies')
 
 
 class Person(db.Model):
-    __tablename__ = 'content.persons'
+    __tablename__ = 'persons'
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = db.Column(db.VARCHAR(255), nullable=False)
@@ -46,7 +46,7 @@ class Person(db.Model):
 
 
 class Genre(db.Model):
-    __tablename__ = 'content.genres'
+    __tablename__ = 'genres'
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = db.Column(db.VARCHAR(255), nullable=False)
@@ -55,7 +55,7 @@ class Genre(db.Model):
 
 
 class Movie(db.Model):
-    __tablename__ = 'content.movies'
+    __tablename__ = 'movies'
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     title = db.Column(db.VARCHAR(255), nullable=False)
