@@ -22,7 +22,7 @@ def close_db(e=None):
 @click.command('init-db')
 @with_appcontext
 def init_db_command():
-    # TODO add models import
+    import movies
     db.create_all()
     click.echo('Initialized the database.')
 
@@ -30,7 +30,7 @@ def init_db_command():
 def init_app(app):
     with app.app_context():
         db.init_app(app)
-        migrate.init_app(app)
+        migrate.init_app(app, db)
         app.before_request(get_db)
         app.teardown_appcontext(close_db)
         app.cli.add_command(init_db_command)

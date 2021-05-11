@@ -4,3 +4,4 @@ venv
 __pychache__/
 
 instance/
+notebooks

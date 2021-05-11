@@ -2,6 +2,7 @@ import os
 
 from flask import Flask
 from .database import init_app as init_db
+from .admin import init_app as init_admin
 
 
 def create_app():
@@ -15,7 +16,7 @@ def create_app():
 
     app.config.from_mapping(
         SECRET_KEY=os.getenv('SECRET', 'secret'),
-        SQLALCHEMY_DATABASE_URI=f'postgres://{username}:{password}@{host}:{port}/{name}'
+        SQLALCHEMY_DATABASE_URI=f'postgresql://{username}:{password}@{host}:{port}/{name}'
     )
 
     try:
@@ -24,5 +25,6 @@ def create_app():
         pass
 
     init_db(app)
+    init_admin(app)
 
     return app
